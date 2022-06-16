@@ -31,9 +31,10 @@ internal class Program
         var input = Console.ReadLine();
         while (input.Trim().ToUpper() != "Q")
         {
+            var cts = new CancellationTokenSource();
             if (int.TryParse(input, out var n))
             {
-                CalculateSum(n);
+                CalculateSum(n, cts.Token);
             }
             else
             {
@@ -42,24 +43,29 @@ internal class Program
             }
 
             input = Console.ReadLine();
+            cts.Cancel();
+            cts.Dispose();
         }
 
         Console.WriteLine("Press any key to continue");
         Console.ReadLine();
     }
 
-    private static void CalculateSum(int n)
+    private static async void CalculateSum(int n, CancellationToken token)
     {
-        var cts = new CancellationTokenSource();
-        // todo: make calculation asynchronous
-        var sum = Task.Run(() => Calculator.Calculate(n, cts.Token));
+        var calculationTask = Task.Run(() => Calculator.Calculate(n, token), token);
         Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
 
-
-        Console.WriteLine($"Sum for {n} = {sum}.");
-        // todo: add code to process cancellation and uncomment this line    
-        // Console.WriteLine($"Sum for {n} cancelled...");
-
-        Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+        try
+        {
+            var sum = await calculationTask;
+            Console.WriteLine($"Sum for {n} = {sum}.");
+            Console.WriteLine();
+            Console.WriteLine("Enter N: ");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"Sum for {n} cancelled...");
+        }
     }
 }
