@@ -24,7 +24,7 @@ public class ManualAssistant : IAssistant
         }
         catch (HttpRequestException ex)
         {
-            return $"Failed to register assistance request. Please try later. {ex.Message}";
+            return await new ValueTask<string>($"Failed to register assistance request. Please try later. {ex.Message}");
         }
     }
 }
